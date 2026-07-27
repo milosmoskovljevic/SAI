@@ -23,6 +23,8 @@ This document describes `SAI_MIRROR_SESSION_ATTR_GUARANTEE_RATE`, a new mirror s
 
 When `GUARANTEE_RATE` is 0, the guarantee feature is disabled and only `SAMPLE_RATE` applies.
 
+The same capability is also available on the samplepacket object, where sampling can be owned by the samplepacket session itself. For that case `SAI_SAMPLEPACKET_ATTR_GUARANTEE_RATE` is added alongside the existing `SAI_SAMPLEPACKET_ATTR_SAMPLE_RATE`, with identical semantics and formula. All sections below apply to both attribute pairs, substitute the samplepacket attributes and samplepacket session scope where relevant.
+
 ### Sampling formula
 
 Let `G` = `GUARANTEE_RATE`, `N` = `SAMPLE_RATE`, and `R` = observed mirror session packet rate (pps).
@@ -220,4 +222,28 @@ Defined in `saimirror.h`:
 SAI_MIRROR_SESSION_ATTR_GUARANTEE_RATE,
 ```
 
-Support for this attribute per mirror session type is **implementation-defined**.
+Defined in `saisamplepacket.h`, with identical semantics relative to `SAI_SAMPLEPACKET_ATTR_SAMPLE_RATE`:
+
+```c
+/**
+ * @brief Guarantee sample rate in packets per second (pps)
+ *
+ * When set to a non-zero value, up to this packet rate per second are always
+ * sampled (100% sampling). Traffic above this rate is statistically sampled
+ * using SAI_SAMPLEPACKET_ATTR_SAMPLE_RATE (approximately G + (R - G) / N
+ * sampled packets per second, where G is this attribute, N is SAMPLE_RATE,
+ * and R is the observed samplepacket session packet rate).
+ *
+ * A value of 0 disables the guarantee rate feature; only SAMPLE_RATE applies.
+ *
+ * Rate measurement and enforcement (including behavior on rate transitions,
+ * burst handling, and reset) are implementation-defined.
+ *
+ * @type sai_uint64_t
+ * @flags CREATE_AND_SET
+ * @default 0
+ */
+SAI_SAMPLEPACKET_ATTR_GUARANTEE_RATE,
+```
+
+Support for these attributes (per mirror session type and per samplepacket object) is **implementation-defined**. NOS should query support with `sai_query_attribute_capability()` for the relevant object type before configuring the attribute, as described in the NOS workflow above.
